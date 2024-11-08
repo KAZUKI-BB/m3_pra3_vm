@@ -1,0 +1,25 @@
+.game-container {
+    display: grid;
+    justify-content: center;
+    gap: 5px;
+  }
+  
+  .row {
+    display: flex;
+  }
+  
+  .cell {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+  }
+  
+  .player { background-color: lightgreen; }
+  .wall { background-color: gray; }
+  .block { background-color: blue; }
+  .flag { background-color: gold; }
+  .empty { background-color: white; }
+  

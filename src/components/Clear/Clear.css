@@ -1,0 +1,29 @@
+.clear-container {
+    text-align: center;
+  }
+  
+  .clear-container h2 {
+    font-size: 24px;
+    margin-bottom: 16px;
+  }
+  
+  .clear-container ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .clear-container li {
+    margin: 8px 0;
+  }
+  
+  .clear-container li.active {
+    font-weight: bold;
+    color: #ff6347;
+  }
+  
+  .clear-container button {
+    margin-top: 16px;
+    padding: 8px 16px;
+    font-size: 16px;
+  }
+  
