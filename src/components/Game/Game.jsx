@@ -66,60 +66,84 @@ const Game = ({ username }) => {
     return null;
   };
 
+  // ... existing code ...
+
   const handleKeyDown = useCallback((e) => {
     const { x, y } = playerPositionRef.current;
+    const moveInfo = calculateNextPosition(e.key, x, y);
+    if (!moveInfo) return;
+
+    const { newX, newY, pushX, pushY } = moveInfo;
+    const moveType = checkMoveType(newX, newY, pushX, pushY);
+    
+    if (moveType === 'invalid') return;
+
+    const updatedField = JSON.parse(JSON.stringify(field));
+    updateFieldFunc(updatedField, moveType, { x, y, newX, newY, pushX, pushY });
+    
+    setField(updatedField);
+    setPlayerPosition({ x: newX, y: newY });
+    playerPositionRef.current = { x: newX, y: newY };
+
+    checkGoal(newX, newY);
+  }, [field, flagPosition, navigate, time, username]);
+
+  // 移動先の座標を計算
+  const calculateNextPosition = (key, x, y) => {
     let newX = x, newY = y;
     let pushX = x, pushY = y;
 
-    if (e.key === 'ArrowUp') { 
-      newY -= 1;
-      pushY -= 2;
+    switch (key) {
+      case 'ArrowUp':
+        return { newX, newY: y - 1, pushX, pushY: y - 2 };
+      case 'ArrowDown':
+        return { newX, newY: y + 1, pushX, pushY: y + 2 };
+      case 'ArrowLeft':
+        return { newX: x - 1, newY: y, pushX: x - 2, pushY };
+      case 'ArrowRight':
+        return { newX: x + 1, newY: y, pushX: x + 2, pushY };
+      default:
+        return null;
     }
-    if (e.key === 'ArrowDown') { 
-      newY += 1;
-      pushY += 2;
-    }
-    if (e.key === 'ArrowLeft') { 
-      newX -= 1;
-      pushX -= 2;
-    }
-    if (e.key === 'ArrowRight') { 
-      newX += 1;
-      pushX += 2;
-    }
-
-    if (canMove(newX, newY, pushX, pushY)) {
-      const updatedField = JSON.parse(JSON.stringify(field));
-
-      if (field[newY][newX] === 3) {
-        updatedField[y][x] = 0;
-        updatedField[newY][newX] = 2;
-        updatedField[pushY][pushX] = 3;
-      } else {
-        updatedField[y][x] = 0;
-        updatedField[newY][newX] = 2;
-      }
-      setField(updatedField);
-      setPlayerPosition({ x: newX, y: newY });
-      playerPositionRef.current = { x: newX, y: newY };
-
-      if (flagPosition && newX === flagPosition.x && newY === flagPosition.y) {
-        stopTimer();
-        const searchParams = new URLSearchParams(location.search);
-        const level = searchParams.get('difficulty') === 'easy' ? 1 : 2;
-        postResult({ level, time });
-        navigate(`/clear?time=${time}&username=${encodeURIComponent(username)}&difficulty=${level}`);
-      }
-    }
-  }, [field, flagPosition, navigate, time, username]);
-
-  const canMove = (newX, newY, pushX, pushY) => {
-    if (field[newY] && (field[newY][newX] === 0 || field[newY][newX] === 4)) return true;
-    if (field[newY] && field[newY][newX] === 3) {
-      return field[pushY] && field[pushY][pushX] === 0;
-    }
-    return false;
   };
+
+  // 移動タイプを判定
+  const checkMoveType = (newX, newY, pushX, pushY) => {
+    if (!field[newY]) return 'invalid';
+    
+    const nextCell = field[newY][newX];
+    
+    if (nextCell === 0 || nextCell === 4) return 'move';
+    if (nextCell === 3 && field[pushY]?.[pushX] === 0) return 'push';
+    return 'invalid';
+  };
+
+  // フィールドの更新
+  const updateFieldFunc = (updatedField, moveType, positions) => {
+    const { x, y, newX, newY, pushX, pushY } = positions;
+    
+    updatedField[y][x] = 0; // 現在位置を空に
+    
+    if (moveType === 'push') {
+      updatedField[newY][newX] = 2; // プレイヤー移動
+      updatedField[pushY][pushX] = 3; // ブロック移動
+    } else {
+      updatedField[newY][newX] = 2; // プレイヤー移動
+    }
+  };
+
+  // ゴール判定
+  const checkGoal = (newX, newY) => {
+    if (flagPosition && newX === flagPosition.x && newY === flagPosition.y) {
+      stopTimer();
+      const searchParams = new URLSearchParams(location.search);
+      const level = searchParams.get('difficulty') === 'easy' ? 1 : 2;
+      postResult({ level, time });
+      navigate(`/clear?time=${time}&username=${encodeURIComponent(username)}&difficulty=${level}`);
+    }
+  };
+
+  // ... existing code ...
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
